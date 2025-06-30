@@ -5,14 +5,21 @@ import { ContainerModal } from "../components/ContainerModal";
 import { CategoryForm } from "../components/Fragments/CategoryForm";
 import { DeleteConfirmation } from "../components/DeleteConfirmation";
 import { CategoryCard } from "../components/Fragments/CategoryCard";
-import { categoryApi } from "../services/api/categoryApi";
 import { ErrorDisplay } from "../components/ErrorDisplay";
-import { toast } from "react-toastify";
+import { EmptyState } from "../components/ui/EmptyState";
 import type { Category, CategoryModalMode } from "../types/categoryTypes";
 
 export const ProductCategoryPage = () => {
-  const { categories, isLoading, error, loadCategories, setCategories } =
-    useCategories();
+  const { 
+    categories, 
+    isLoading, 
+    error, 
+    loadCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory
+  } = useCategories();
+  
   const [modal, setModal] = useState({
     isOpen: false,
     mode: "create" as CategoryModalMode,
@@ -20,6 +27,25 @@ export const ProductCategoryPage = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const handleSubmit = async (submittedData?: Category) => {
+    if (!modal.selectedItem) return;
+
+    let success = false;
+
+    if (modal.mode === "create" && submittedData) {
+      success = await createCategory(submittedData);
+    } else if (modal.mode === "edit" && submittedData) {
+      success = await updateCategory(submittedData);
+    } else if (modal.mode === "delete") {
+      success = await deleteCategory(modal.selectedItem.id);
+    }
+
+    if (success) {
+      closeModal();
+    }
+  };
+
+  // Modal handlers remain the same
   const openModal = (mode: CategoryModalMode, category?: Category) => {
     setModal({
       isOpen: true,
@@ -36,58 +62,6 @@ export const ProductCategoryPage = () => {
   const closeModal = () => {
     setModal((prev) => ({ ...prev, isOpen: false }));
     setErrors({});
-  };
-
-  const handleSubmit = async (submittedData?: Category) => {
-    try {
-      if (!modal.selectedItem) return;
-
-      if (modal.mode === "create") {
-        if (!submittedData) {
-          toast.error("No category data submitted");
-          return;
-        }
-
-        const newCategory: Omit<Category, "id"> = {
-          name: submittedData.name,
-          description: submittedData.description,
-          image: submittedData.image,
-        };
-        const response = await categoryApi.create(newCategory);
-        if ("data" in response && response.data) {
-          setCategories((prev) => [...prev, response.data as Category]);
-          toast.success("Category created successfully");
-        } else {
-          throw new Error((response as any).message || "Failed to create category");
-        }
-      } else if (modal.mode === "edit") {
-        const response = await categoryApi.update(
-          submittedData!.id,
-          submittedData!
-        );
-        if ("data" in response && response.data) {
-          setCategories((prev) =>
-            prev.map((item) =>
-              item.id === submittedData!.id ? response.data as Category : item
-            )
-          );
-          toast.success("Category updated successfully");
-        } else {
-          throw new Error((response as any).message || "Failed to update category");
-        }
-      } else if (modal.mode === "delete") {
-        await categoryApi.delete(modal.selectedItem.id);
-        setCategories((prev) =>
-          prev.filter((item) => item.id !== modal.selectedItem?.id)
-        );
-        toast.success("Category deleted successfully");
-      }
-
-      closeModal();
-    } catch (err: any) {
-      toast.error(err.message || "Operation failed");
-      console.error("API Error:", err);
-    }
   };
 
   return (
@@ -118,7 +92,7 @@ export const ProductCategoryPage = () => {
             />
           ))
         ) : (
-          <CategoryCard isEmptyState />
+          <EmptyState dataName="Kategori Produk" />
         )}
       </div>
 
