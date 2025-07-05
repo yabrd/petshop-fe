@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { TextInput } from "../ui/TextInput";
-import { TextareaInput } from "../ui/TextareaInput";
-import type { Category } from "../../types/categoryTypes";
+import { TextInput } from "../../ui/TextInput";
+import { TextareaInput } from "../../ui/TextareaInput";
+import type { Category } from "../../../types/categoryTypes";
 
 type CategoryFormProps = {
   initialData: Category;
@@ -39,6 +39,8 @@ export const CategoryForm = ({
       <TextInput
         label="Nama Kategori"
         name="name"
+        type="text"
+        placeholder="Masukkan nama kategori"
         value={formData.name}
         onChange={handleChange}
         error={errors.name}
@@ -49,6 +51,7 @@ export const CategoryForm = ({
       <TextareaInput
         label="Deskripsi"
         name="description"
+        placeholder="Masukkan deskripsi kategori"
         value={formData.description || ''}
         onChange={handleChange}
         rows={3}

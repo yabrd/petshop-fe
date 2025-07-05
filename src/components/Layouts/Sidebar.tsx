@@ -116,6 +116,27 @@ const Sidebar = () => {
               "/>
             </div>
           </Link>
+
+          <Link to="/store" className="w-full">
+            <div className={linkClass("/store")}>
+              {location.pathname === "/store" && (
+                <span className="
+                  absolute left-0 top-0 h-full w-1
+                  bg-gradient-to-b from-purple-500 to-purple-600
+                  rounded-r
+                "/>
+              )}
+              <HiOutlineSquares2X2 className="w-5 h-5" />
+              <span>Store</span>
+              <span className="
+                absolute inset-0 rounded-lg
+                opacity-0 group-hover:opacity-100
+                transition-opacity duration-200
+                bg-blue-50 dark:bg-gray-700
+                -z-10
+              "/>
+            </div>
+          </Link>
         </nav>
       </div>
 

@@ -1,5 +1,5 @@
 // src/components/ProductTable.tsx
-import type { Product } from '../../types/productTypes';
+import type { Product } from '../../../types/productTypes';
 
 interface ProductTableProps {
   products: Product[];
@@ -69,7 +69,7 @@ export const ProductTable = ({ products, isLoading, onEdit, onDelete }: ProductT
                 </span>
               </td>
               <td className="px-6 py-4 text-center font-medium text-gray-900 dark:text-white">
-                ${product.price.toFixed(2)}
+                Rp. {product.price.toLocaleString("id-ID")}
               </td>
               <td className="px-6 py-4 text-center whitespace-nowrap space-x-2">
                 <button

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import LoginForm from "../components/Fragments/LoginForm";
-import RegisterForm from "../components/Fragments/RegisterForm";
+import LoginForm from "../components/Fragments/Auth/LoginForm";
+import RegisterForm from "../components/Fragments/Auth/RegisterForm";
 import AuthLayout from "../components/Layouts/AuthLayout";
 
 const AuthPage = () => {

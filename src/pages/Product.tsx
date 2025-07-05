@@ -1,24 +1,17 @@
 // src/pages/ProductPage.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useProducts } from "../hooks/useProducts";
-import { ContainerModal } from "../components/ContainerModal";
-import { ProductForm } from "../components/Fragments/ProductForm";
-import { DeleteConfirmation } from "../components/DeleteConfirmation";
-import { ProductTable } from "../components/Fragments/ProductTable";
-import { ErrorDisplay } from "../components/ErrorDisplay";
+import { ContainerModal } from "../components/Elements/ContainerModal";
+import { ProductForm } from "../components/Fragments/Product/ProductForm";
+import { DeleteConfirmation } from "../components/Elements/DeleteConfirmation";
+import { ProductTable } from "../components/Fragments/Product/ProductTable";
+import { EmptyState } from "../components/ui/EmptyState";
 import type { Product, ProductModalMode } from "../types/productTypes";
 
 export const ProductPage = () => {
-  const { 
-    products, 
-    isLoading, 
-    error, 
-    loadProducts, 
-    createProduct, 
-    updateProduct, 
-    deleteProduct 
-  } = useProducts();
-  
+  const { state, loadProducts, createProduct, updateProduct, deleteProduct } =
+    useProducts();
+
   const [modal, setModal] = useState({
     isOpen: false,
     mode: "create" as ProductModalMode,
@@ -32,7 +25,10 @@ export const ProductPage = () => {
     let success = false;
 
     if (modal.mode === "create" && submittedData) {
-      success = await createProduct(submittedData);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, ...createData } = submittedData;
+      const result = await createProduct(createData);
+      success = result.success;
     } else if (modal.mode === "edit" && submittedData) {
       success = await updateProduct(submittedData);
     } else if (modal.mode === "delete") {
@@ -44,7 +40,6 @@ export const ProductPage = () => {
     }
   };
 
-  // Modal handlers remain the same
   const openModal = (mode: ProductModalMode, product?: Product) => {
     setModal({
       isOpen: true,
@@ -56,7 +51,6 @@ export const ProductPage = () => {
         price: 0,
         image: "",
         categoryId: 0,
-        categoryName: "",
         stock: 0,
       },
     });
@@ -67,6 +61,10 @@ export const ProductPage = () => {
     setErrors({});
   };
 
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
   return (
     <>
       <div className="flex justify-between items-center mb-6">
@@ -76,20 +74,22 @@ export const ProductPage = () => {
         <button
           onClick={() => openModal("create")}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          disabled={isLoading}
+          disabled={state.isLoading}
         >
-          {isLoading ? "Loading..." : "+ Add Product"}
+          {state.isLoading ? "Loading..." : "+ Add Product"}
         </button>
       </div>
 
-      {error && <ErrorDisplay error={error} onRetry={loadProducts} />}
-
-      <ProductTable
-        products={products}
-        isLoading={isLoading}
-        onEdit={(product) => openModal("edit", product)}
-        onDelete={(product) => openModal("delete", product)}
-      />
+      {state.products.length > 0 ? (
+        <ProductTable
+          products={state.products}
+          isLoading={state.isLoading}
+          onEdit={(product) => openModal("edit", product)}
+          onDelete={(product) => openModal("delete", product)}
+        />
+      ) : (
+        <EmptyState dataName="Produk" />
+      )}
 
       <ContainerModal
         isOpen={modal.isOpen}

@@ -1,25 +1,22 @@
 // src/pages/ProductCategoryPage.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCategories } from "../hooks/useCategories";
-import { ContainerModal } from "../components/ContainerModal";
-import { CategoryForm } from "../components/Fragments/CategoryForm";
-import { DeleteConfirmation } from "../components/DeleteConfirmation";
-import { CategoryCard } from "../components/Fragments/CategoryCard";
-import { ErrorDisplay } from "../components/ErrorDisplay";
+import { ContainerModal } from "../components/Elements/ContainerModal";
+import { CategoryForm } from "../components/Fragments/Category/CategoryForm";
+import { DeleteConfirmation } from "../components/Elements/DeleteConfirmation";
+import { CategoryCard } from "../components/Fragments/Category/CategoryCard";
 import { EmptyState } from "../components/ui/EmptyState";
 import type { Category, CategoryModalMode } from "../types/categoryTypes";
 
 export const ProductCategoryPage = () => {
-  const { 
-    categories, 
-    isLoading, 
-    error, 
+  const {
+    state,
     loadCategories,
     createCategory,
     updateCategory,
-    deleteCategory
+    deleteCategory,
   } = useCategories();
-  
+
   const [modal, setModal] = useState({
     isOpen: false,
     mode: "create" as CategoryModalMode,
@@ -33,7 +30,10 @@ export const ProductCategoryPage = () => {
     let success = false;
 
     if (modal.mode === "create" && submittedData) {
-      success = await createCategory(submittedData);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, ...createData } = submittedData;
+      const result = await createCategory(createData);
+      success = result.success;
     } else if (modal.mode === "edit" && submittedData) {
       success = await updateCategory(submittedData);
     } else if (modal.mode === "delete") {
@@ -45,7 +45,6 @@ export const ProductCategoryPage = () => {
     }
   };
 
-  // Modal handlers remain the same
   const openModal = (mode: CategoryModalMode, category?: Category) => {
     setModal({
       isOpen: true,
@@ -64,6 +63,10 @@ export const ProductCategoryPage = () => {
     setErrors({});
   };
 
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
   return (
     <>
       <div className="flex justify-between items-center mb-6">
@@ -73,17 +76,15 @@ export const ProductCategoryPage = () => {
         <button
           onClick={() => openModal("create")}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          disabled={isLoading}
+          disabled={state.isLoading}
         >
-          {isLoading ? "Loading..." : "+ Add Category"}
+          {state.isLoading ? "Loading..." : "+ Add Category"}
         </button>
       </div>
 
-      {error && <ErrorDisplay error={error} onRetry={loadCategories} />}
-
       <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
-        {categories.length > 0 ? (
-          categories.map((category) => (
+        {state.categories.length > 0 ? (
+          state.categories.map((category) => (
             <CategoryCard
               key={category.id}
               category={category}

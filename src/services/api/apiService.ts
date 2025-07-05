@@ -11,7 +11,7 @@ interface ApiErrorResponse {
   status: "error";
   message: string;
   code?: number;
-  errors?: Record<string, string[]>;
+  errors?: Array<{ field: string; message: string }>; // Sesuai format backend
 }
 
 type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
@@ -50,16 +50,22 @@ class ApiService {
     const responseData = await response.json().catch(() => ({}));
 
     if (!response.ok) {
+      // Kembalikan struktur error asli dari backend
+      const errorResponse: ApiErrorResponse = {
+        status: responseData.status || "error",
+        message:
+          responseData.message ||
+          `Request failed with status ${response.status}`,
+        code: responseData.code || response.status,
+        errors: responseData.errors, // Pertahankan array errors asli
+      };
+
       if (response.status === 401) {
         this.clearAuthToken();
-        throw new Error(responseData.message || "Unauthorized");
+        errorResponse.message = responseData.message || "Unauthorized";
       }
 
-      throw new Error(
-        responseData.message ||
-          responseData.error ||
-          `Request failed with status ${response.status}`
-      );
+      throw errorResponse; // Lempar object error lengkap
     }
 
     return {
@@ -120,31 +126,49 @@ class ApiService {
       const response = await fetch(url, options);
       return await this.handleResponse<T>(response);
     } catch (error) {
-      if (
-        retry &&
-        typeof error === "object" &&
-        error !== null &&
-        "message" in error &&
-        typeof (error as any).message === "string" &&
-        (error as any).message.includes("Session expired") &&
-        this.authToken
-      ) {
+      if (retry && this.shouldRetryRequest(error)) {
         try {
           await this.refreshToken();
           return this.request<T>(method, endpoint, data, false);
         } catch (refreshError) {
           this.clearAuthToken();
-          throw refreshError;
+          return this.buildErrorResponse(refreshError);
         }
       }
 
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Unknown error occurred",
-        code: error instanceof DOMException ? 0 : 500,
-      };
+      if (this.isStructuredError(error)) {
+        return error;
+      }
+
+      return this.buildErrorResponse(error);
     }
+  }
+
+  // Helper methods
+  private shouldRetryRequest(error: unknown): boolean {
+    return (
+      this.authToken !== null &&
+      error instanceof Error &&
+      error.message.includes("Unauthorized")
+    );
+  }
+
+  private isStructuredError(error: unknown): error is ApiErrorResponse {
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "status" in error &&
+      "message" in error
+    );
+  }
+
+  private buildErrorResponse(error: unknown): ApiErrorResponse {
+    return {
+      status: "error",
+      message:
+        error instanceof Error ? error.message : "Unknown error occurred",
+      code: error instanceof DOMException ? 0 : 500,
+    };
   }
 
   // HTTP Methods

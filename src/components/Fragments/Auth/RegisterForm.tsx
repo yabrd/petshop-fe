@@ -1,21 +1,28 @@
-// LoginForm.tsx
-import { useNavigate } from "react-router-dom";
+// RegisterForm.tsx
 import { useState } from "react";
-import { FiMail, FiLock, FiLogIn } from "react-icons/fi";
-import { useAuth } from "../../hooks/useAuth";
+import { FiUser, FiMail, FiLock, FiUserPlus } from "react-icons/fi";
+import { useAuth } from "../../../hooks/useAuth";
 
-interface LoginFormProps {
+interface RegisterFormProps {
   onSuccess: (msg: string) => void;
   onError: (msg: string) => void;
   loading: boolean;
   setLoading: (val: boolean) => void;
 }
 
-const LoginForm = ({ onSuccess, onError, loading, setLoading }: LoginFormProps) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const { login } = useAuth();
-  const navigate = useNavigate();
+const RegisterForm = ({ onSuccess, onError, loading, setLoading }: RegisterFormProps) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const { register } = useAuth();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,11 +31,16 @@ const LoginForm = ({ onSuccess, onError, loading, setLoading }: LoginFormProps) 
     onSuccess("");
 
     try {
-      await login(email, password);
-      onSuccess("Login successful! Redirecting...");
-      navigate("/category")
+      const { name, email, password, confirmPassword } = formData;
+
+      if (password !== confirmPassword) {
+        throw new Error("Passwords do not match");
+      }
+
+      await register(name, email, password);
+      onSuccess("Registration successful! You can now login.");
     } catch (err) {
-      onError(err instanceof Error ? err.message : "Login failed");
+      onError(err instanceof Error ? err.message : "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -36,7 +48,27 @@ const LoginForm = ({ onSuccess, onError, loading, setLoading }: LoginFormProps) 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Email Field */}
+      {/* Full Name */}
+      <div>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Full Name
+        </label>
+        <div className="relative">
+          <FiUser className="absolute left-3 top-3 text-gray-400 dark:text-gray-500" />
+          <input
+            type="text"
+            id="name"
+            placeholder="John Doe"
+            required
+            value={formData.name}
+            onChange={handleChange}
+            className="w-full pl-10 px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            disabled={loading}
+          />
+        </div>
+      </div>
+
+      {/* Email */}
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Email
@@ -44,19 +76,19 @@ const LoginForm = ({ onSuccess, onError, loading, setLoading }: LoginFormProps) 
         <div className="relative">
           <FiMail className="absolute left-3 top-3 text-gray-400 dark:text-gray-500" />
           <input
-            id="email"
             type="email"
-            required
+            id="email"
             placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            required
+            value={formData.email}
+            onChange={handleChange}
             className="w-full pl-10 px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             disabled={loading}
           />
         </div>
       </div>
 
-      {/* Password Field */}
+      {/* Password */}
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Password
@@ -64,12 +96,34 @@ const LoginForm = ({ onSuccess, onError, loading, setLoading }: LoginFormProps) 
         <div className="relative">
           <FiLock className="absolute left-3 top-3 text-gray-400 dark:text-gray-500" />
           <input
-            id="password"
             type="password"
-            required
+            id="password"
             placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            value={formData.password}
+            onChange={handleChange}
+            className="w-full pl-10 px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            disabled={loading}
+          />
+        </div>
+      </div>
+
+      {/* Confirm Password */}
+      <div>
+        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Confirm Password
+        </label>
+        <div className="relative">
+          <FiLock className="absolute left-3 top-3 text-gray-400 dark:text-gray-500" />
+          <input
+            type="password"
+            id="confirmPassword"
+            placeholder="••••••••"
+            required
+            minLength={6}
+            value={formData.confirmPassword}
+            onChange={handleChange}
             className="w-full pl-10 px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             disabled={loading}
           />
@@ -112,8 +166,8 @@ const LoginForm = ({ onSuccess, onError, loading, setLoading }: LoginFormProps) 
           </span>
         ) : (
           <>
-            <FiLogIn className="w-5 h-5" />
-            Sign In
+            <FiUserPlus className="w-5 h-5" />
+            Sign Up
           </>
         )}
       </button>
@@ -121,4 +175,4 @@ const LoginForm = ({ onSuccess, onError, loading, setLoading }: LoginFormProps) 
   );
 };
 
-export default LoginForm;
+export default RegisterForm;

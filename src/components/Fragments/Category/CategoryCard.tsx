@@ -1,6 +1,6 @@
 // src/components/Fragments/CategoryCard.tsx
-import type { Category } from "../../types/categoryTypes";
-import { EmptyState } from "../ui/EmptyState";
+import type { Category } from "../../../types/categoryTypes";
+import { EmptyState } from "../../ui/EmptyState";
 
 type CategoryCardProps = {
   category?: Category;

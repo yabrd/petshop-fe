@@ -1,12 +1,12 @@
 // src/components/Fragments/ProductForm.tsx
 import { useState, useEffect } from "react";
-import { categoryApi } from "../../services/api/categoryApi";
-import { TextInput } from "../ui/TextInput";
-import { TextareaInput } from "../ui/TextareaInput";
-import { NumberInput } from "../ui/NumberInput";
-import { SelectInput } from "../ui/SelectInput";
-import type { Product } from "../../types/productTypes";
-import type { Category } from "../../types/categoryTypes";
+import { categoryApi } from "../../../services/api/categoryApi";
+import { TextInput } from "../../ui/TextInput";
+import { TextareaInput } from "../../ui/TextareaInput";
+import { NumberInput } from "../../ui/NumberInput";
+import { SelectInput } from "../../ui/SelectInput";
+import type { Product } from "../../../types/productTypes";
+import type { Category } from "../../../types/categoryTypes";
 
 interface ProductFormProps {
   initialData: Product;
@@ -74,6 +74,7 @@ export const ProductForm = ({
         <TextInput
           label="Product Name"
           name="name"
+          placeholder="Masukan nama barang"
           value={formData.name}
           onChange={handleChange}
           error={errors.name}
@@ -82,6 +83,8 @@ export const ProductForm = ({
         <NumberInput
           label="Price"
           name="price"
+          placeholder="Masukan harga barang"
+          prefix="Rp"
           value={formData.price}
           onChange={handleChange}
           error={errors.price}
@@ -91,6 +94,8 @@ export const ProductForm = ({
         <NumberInput
           label="Stock"
           name="stock"
+          placeholder="Masukan stok barang"
+          prefix="pcs"
           value={formData.stock}
           onChange={handleChange}
           error={errors.stock}
@@ -114,6 +119,7 @@ export const ProductForm = ({
       <TextInput
         label="Image URL"
         name="image"
+        type="url"
         value={formData.image}
         onChange={handleChange}
         error={errors.image}
@@ -122,6 +128,7 @@ export const ProductForm = ({
       <TextareaInput
         label="Description"
         name="description"
+        placeholder="Masukan deskripsi barang"
         value={formData.description}
         onChange={handleChange}
         rows={4}

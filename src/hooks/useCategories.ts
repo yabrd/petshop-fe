@@ -1,66 +1,78 @@
 // src/hooks/useCategories.ts
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { categoryApi } from "../services/api/categoryApi";
 import type { Category } from "../types/categoryTypes";
 import { toast } from "react-toastify";
 
 export const useCategories = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<{
+    categories: Category[];
+    isLoading: boolean;
+    error: string | null;
+  }>({
+    categories: [],
+    isLoading: false,
+    error: null,
+  });
+
+  const handleError = (error: unknown, defaultMessage: string) => {
+    const message = error instanceof Error ? error.message : defaultMessage;
+    setState((prev) => ({ ...prev, error: message }));
+    toast.error(message);
+    return message;
+  };
 
   const loadCategories = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
     try {
       const response = await categoryApi.getAll();
       if ("data" in response && Array.isArray(response.data)) {
-        setCategories(response.data);
+        setState((prev) => ({ ...prev, categories: response.data }));
       } else {
-        setError("Failed to load categories");
+        handleError(response, "Failed to load categories");
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load categories"
-      );
+      handleError(err, "Failed to load categories");
     } finally {
-      setIsLoading(false);
+      setState((prev) => ({ ...prev, isLoading: false }));
     }
   }, []);
 
   const createCategory = useCallback(
     async (categoryData: Omit<Category, "id">) => {
-      setIsLoading(true);
+      setState((prev) => ({ ...prev, isLoading: true }));
       try {
-        const { id, ...dataWithoutId } = categoryData as any;
-        const response = await categoryApi.create(dataWithoutId);
-        if ("data" in response && response.data) {
-          setCategories((prev) => [...prev, response.data]);
+        const response = await categoryApi.create(categoryData);
+        if ("data" in response) {
+          setState((prev) => ({
+            ...prev,
+            categories: [...prev.categories, response.data],
+          }));
           toast.success("Category created successfully");
-          return true;
+          return { success: true, data: response.data };
         }
-        toast.error(response.message || "Failed to create category");
-        return false;
-      } catch (err: any) {
-        toast.error(err.message || "Failed to create category");
-        return false;
+        throw new Error(response.message || "Failed to create category");
+      } catch (err) {
+        const message = handleError(err, "Failed to create category");
+        return { success: false, message };
       } finally {
-        setIsLoading(false);
+        setState((prev) => ({ ...prev, isLoading: false }));
       }
     },
     []
   );
 
   const updateCategory = useCallback(async (categoryData: Category) => {
-    setIsLoading(true);
+      setState((prev) => ({ ...prev, isLoading: true }));
     try {
       const response = await categoryApi.update(categoryData.id, categoryData);
       if ("data" in response && response.data) {
-        setCategories((prev) =>
-          prev.map((item) =>
+        setState((prev) => ({
+          ...prev,
+          categories: prev.categories.map((item) =>
             item.id === categoryData.id ? response.data : item
-          )
-        );
+          ),
+        }))
         toast.success("Category updated successfully");
         return true;
       }
@@ -70,37 +82,32 @@ export const useCategories = () => {
       toast.error(err.message || "Failed to update category");
       return false;
     } finally {
-      setIsLoading(false);
+      setState((prev) => ({ ...prev, isLoading: false }));
     }
   }, []);
 
   const deleteCategory = useCallback(async (categoryId: number) => {
-    setIsLoading(true);
     try {
       await categoryApi.delete(categoryId);
-      setCategories((prev) => prev.filter((item) => item.id !== categoryId));
+      setState((prev) => ({
+        ...prev,
+        categories: prev.categories.filter((item) => item.id !== categoryId),
+      }))
       toast.success("Category deleted successfully");
       return true;
     } catch (err: any) {
       toast.error(err.message || "Failed to delete category");
       return false;
     } finally {
-      setIsLoading(false);
+      setState((prev) => ({ ...prev, isLoading: false }));
     }
   }, []);
 
-  useEffect(() => {
-    loadCategories();
-  }, [loadCategories]);
-
   return {
-    categories,
-    isLoading,
-    error,
+    state,
     loadCategories,
     createCategory,
     updateCategory,
     deleteCategory,
-    setCategories, // Only include if still needed
   };
 };
